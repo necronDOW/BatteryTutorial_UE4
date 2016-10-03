@@ -22,6 +22,23 @@ public:
 
 	// Returns the mesh for the pickup.
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return PickupMesh; }
+	
+	// Technically modifiable, but typically shouldn't be modified.
+	UFUNCTION(BlueprintPure, Category = "Pickup")
+	bool IsActive();
+
+	// Only run when the execution pin is hit and will save results to output pins.
+	UFUNCTION(BlueprintCallable, Category = "Pickup")
+	void SetActive(bool newPickupState);
+
+	/* Expensive calculations that don't change frequently are better as BlueprintCallable, 
+	but fast calculations that frequently change are better as BlueprintPure functions. 
+	
+	See available documentation for more about Blueprint API functions. */
+
+protected:
+	// True when the pickup can be used. false when pickup is de-activated.
+	bool isActive;
 
 private:
 	// Static mesh to represent pickup in the level.
