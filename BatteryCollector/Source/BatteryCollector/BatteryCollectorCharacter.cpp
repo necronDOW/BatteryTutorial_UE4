@@ -46,6 +46,10 @@ ABatteryCollectorCharacter::ABatteryCollectorCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	// Set base power level for the character.
+	initialPower = 2000.0f;
+	currentPower = initialPower;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -164,4 +168,23 @@ void ABatteryCollectorCharacter::CollectPickups()
 			testPickup->SetActive(false);
 		}
 	}
+}
+
+// Report the initial/starting power for the character.
+float ABatteryCollectorCharacter::GetInitialPower()
+{
+	return initialPower;
+}
+
+// Report the current character power level.
+float ABatteryCollectorCharacter::GetCurrentPower()
+{
+	return currentPower;
+}
+
+// Increment or decrement the player power level.
+void ABatteryCollectorCharacter::UpdatePower(float powerChange)
+{
+	currentPower += powerChange;
+
 }
