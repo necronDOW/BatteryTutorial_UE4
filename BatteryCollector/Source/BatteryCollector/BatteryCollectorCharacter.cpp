@@ -4,6 +4,7 @@
 #include "Kismet/HeadMountedDisplayFunctionLibrary.h"
 #include "BatteryCollectorCharacter.h"
 #include "Pickup.h"
+#include "BatteryPickup.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ABatteryCollectorCharacter
@@ -154,6 +155,9 @@ void ABatteryCollectorCharacter::CollectPickups()
 	TArray<AActor*> collectedActors;
 	collectionSphere->GetOverlappingActors(collectedActors);
 
+	// Keep track of the collected power.
+	float collectedPower = 0;
+
 	// For each overlapping actor ...
 	for (int32 iCollected = 0; iCollected < collectedActors.Num(); ++iCollected)
 	{
@@ -163,10 +167,26 @@ void ABatteryCollectorCharacter::CollectPickups()
 		// If the cast is successful and the pickup is active ...
 		if (testPickup && !testPickup->IsPendingKill() && testPickup->IsActive())
 		{
-			// Call pickup collection code and de-activate the pickup.
+			// Call pickup collection code.
 			testPickup->WasCollected();
+			
+			// If the pickup is of type battery ...
+			ABatteryPickup* const testBattery = Cast<ABatteryPickup>(testPickup);
+			if (testBattery)
+			{
+				// Add the battery power to the total collected in this loop.
+				collectedPower += testBattery->GetPower();
+			}
+
+			// De-activate the pickup.
 			testPickup->SetActive(false);
 		}
+	}
+
+	// Update the characters collected power if any was accumulated.
+	if (collectedPower > 0)
+	{
+		UpdatePower(collectedPower);
 	}
 }
 
@@ -186,5 +206,4 @@ float ABatteryCollectorCharacter::GetCurrentPower()
 void ABatteryCollectorCharacter::UpdatePower(float powerChange)
 {
 	currentPower += powerChange;
-
 }
