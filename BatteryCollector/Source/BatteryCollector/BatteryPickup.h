@@ -5,9 +5,6 @@
 #include "Pickup.h"
 #include "BatteryPickup.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class BATTERYCOLLECTOR_API ABatteryPickup : public APickup
 {
