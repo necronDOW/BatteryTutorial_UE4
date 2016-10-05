@@ -21,7 +21,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	// Returns the mesh for the pickup.
-	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return PickupMesh; }
+	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return pickupMesh; }
 	
 	// Technically modifiable, but typically shouldn't be modified.
 	UFUNCTION(BlueprintPure, Category = "Pickup")
@@ -36,6 +36,14 @@ public:
 	
 	See available documentation for more about Blueprint API functions. */
 
+	// Function to call when a pickup is collected.
+	UFUNCTION(BlueprintNativeEvent)
+	void WasCollected();
+	virtual void WasCollected_Implementation();
+
+	/* BlueprintNativeEvents split behaviour between code and blueprints but do not require
+	code to be overwritten in blueprints to function. */
+
 protected:
 	// True when the pickup can be used. false when pickup is de-activated.
 	bool isActive;
@@ -44,5 +52,5 @@ private:
 	// Static mesh to represent pickup in the level.
 	// Whilst the mesh is private, we still want to be able to change properties within the level. The UPROPERTY line allows for this.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (AllowPrivateAccess = "true"))
-	class UStaticMeshComponent* PickupMesh;
+	class UStaticMeshComponent* pickupMesh;
 };

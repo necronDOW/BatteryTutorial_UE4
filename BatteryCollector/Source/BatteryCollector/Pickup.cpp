@@ -13,8 +13,8 @@ APickup::APickup()
 	isActive = true;
 
 	// Create the static mesh component.
-	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh"));
-	RootComponent = PickupMesh;
+	pickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh"));
+	RootComponent = pickupMesh;
 }
 
 // Called when the game starts or when spawned
@@ -39,4 +39,11 @@ bool APickup::IsActive()
 void APickup::SetActive(bool newPickupState)
 {
 	isActive = newPickupState;
+}
+
+void APickup::WasCollected_Implementation()
+{
+	// Log a debug message for what was collected.
+	FString pickupDebugString = GetName();
+	UE_LOG(LogClass, Log, TEXT("You have collected %s"), *pickupDebugString);
 }
