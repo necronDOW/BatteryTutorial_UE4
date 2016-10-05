@@ -18,6 +18,18 @@ ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 	decayRate = 0.01f;
 }
 
+void ABatteryCollectorGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Set the score to beat.
+	ABatteryCollectorCharacter* myCharacter = Cast<ABatteryCollectorCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	if (myCharacter)
+	{
+		powerToWin = myCharacter->GetInitialPower() * 1.25f;
+	}
+}
+
 void ABatteryCollectorGameMode::Tick(float deltaTime)
 {
 	Super::Tick(deltaTime);
