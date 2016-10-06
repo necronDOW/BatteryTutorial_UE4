@@ -5,6 +5,7 @@
 #include "BatteryCollectorCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
+#include "SpawnVolume.h"
 
 ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 {
@@ -22,6 +23,21 @@ ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 void ABatteryCollectorGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Find all spawn volume Actors.
+	TArray<AActor*> foundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), foundActors);
+
+	// Add all found actors to an array of spawn volumes.
+	for (auto actor : foundActors)
+	{
+		ASpawnVolume* spawnVolumeActor = Cast<ASpawnVolume>(actor);
+		if (spawnVolumeActor)
+		{
+			spawnVolumeActors.AddUnique(spawnVolumeActor);
+		}
+	}
+
 	SetCurrentState(EBatteryPlayState::EPlaying);
 
 	// Set the score to beat.
@@ -80,5 +96,66 @@ EBatteryPlayState ABatteryCollectorGameMode::GetCurrentState() const
 
 void ABatteryCollectorGameMode::SetCurrentState(EBatteryPlayState newState)
 {
+	// Set the new state and handle any necessary actions.
 	currentState = newState;
+	HandleNewState(currentState);
+}
+
+void ABatteryCollectorGameMode::HandleNewState(EBatteryPlayState newState)
+{
+	switch (newState)
+	{
+		// If the game is playing.
+		case EBatteryPlayState::EPlaying:
+		{
+			// Spawn volumes active.
+			for (ASpawnVolume* volume : spawnVolumeActors)
+			{
+				volume->SetSpawningActive(true);
+			}
+		}
+		break;
+		// If we've won the game.
+		case EBatteryPlayState::EWon:
+		{
+			// Spawn volumes in-active.
+			for (ASpawnVolume* volume : spawnVolumeActors)
+			{
+				volume->SetSpawningActive(false);
+			}
+		}
+		break;
+		// If we've lost the game.
+		case EBatteryPlayState::EGameOver:
+		{
+			// Spawn volumes in-active.
+			for (ASpawnVolume* volume : spawnVolumeActors)
+			{
+				volume->SetSpawningActive(false);
+			}
+
+			// Block player input.
+			APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
+			if (controller)
+			{
+				controller->SetCinematicMode(true, false, false, true, true);
+			}
+
+			// Ragdoll the character.
+			ACharacter* character = UGameplayStatics::GetPlayerCharacter(this, 0);
+			if (character)
+			{
+				character->GetMesh()->SetSimulatePhysics(true);
+				character->GetMovementComponent()->MovementState.bCanJump = false;
+			}
+		}
+		break;
+		// Unknown/default state.
+		default:
+		case EBatteryPlayState::EUnknown:
+		{
+			// Do nothing.
+		}
+		break;
+	}
 }
