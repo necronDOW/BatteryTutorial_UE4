@@ -61,4 +61,10 @@ private:
 
 	// Handle any function calls that rely upon changing the playing state of the game.
 	void HandleNewState(EBatteryPlayState newState);
+
+	FString logDir;
+	FString logExt;
+	void LogActor(AActor* target);
+	void LogActors(TArray<AActor*> targets);
+	FString CreateDirectory(FString fileDir, FString fileName);
 };

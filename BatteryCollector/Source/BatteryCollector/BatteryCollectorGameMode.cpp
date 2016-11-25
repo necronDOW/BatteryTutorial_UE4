@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
 #include "SpawnVolume.h"
+#include "BatteryPickup.h"
 
 ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 {
@@ -18,6 +19,9 @@ ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 
 	// Base decay rate.
 	decayRate = 0.01f;
+
+	logDir = FPaths::GameDir() + "Content/Logs/";
+	logExt = ".log";
 }
 
 void ABatteryCollectorGameMode::BeginPlay()
@@ -81,7 +85,13 @@ void ABatteryCollectorGameMode::Tick(float deltaTime)
 			// If the player has lost all power, game over.
 			SetCurrentState(EBatteryPlayState::EGameOver);
 		}
+
+		LogActor(myCharacter);
 	}
+
+	TArray<AActor*> batteryPickups;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABatteryPickup::StaticClass(), batteryPickups);
+	LogActors(batteryPickups);
 }
 
 float ABatteryCollectorGameMode::GetPowerToWin() const
@@ -158,4 +168,43 @@ void ABatteryCollectorGameMode::HandleNewState(EBatteryPlayState newState)
 		}
 		break;
 	}
+}
+
+void ABatteryCollectorGameMode::LogActor(AActor* target)
+{
+	FString fileName = target->GetName() + logExt;
+	FString dir = CreateDirectory(logDir, fileName);
+
+	FString output = "name:" + target->GetName() + "\n";
+	FFileHelper::SaveStringToFile(output, *dir, FFileHelper::EEncodingOptions::ForceUTF8, 
+		&IFileManager::Get(), FILEWRITE_Append);
+}
+
+void ABatteryCollectorGameMode::LogActors(TArray<AActor*> targets)
+{
+	if (targets.Num() == 0)
+		return;
+
+	FString fileName = targets[0]->GetName() + "_etc" + logExt;
+	FString dir = CreateDirectory(logDir, fileName);
+
+	for (AActor* target : targets)
+	{
+		FString output = "name:" + target->GetName() + ";";
+		FFileHelper::SaveStringToFile(output, *dir, FFileHelper::EEncodingOptions::ForceUTF8,
+			&IFileManager::Get(), FILEWRITE_Append);
+	}
+}
+
+FString ABatteryCollectorGameMode::CreateDirectory(FString fileDir, FString fileName)
+{
+	IPlatformFile &platformFile = FPlatformFileManager::Get().GetPlatformFile();
+
+	if (!platformFile.DirectoryExists(*fileDir))
+		platformFile.CreateDirectory(*fileDir);
+
+	if (!platformFile.FileExists(*(fileDir + fileName)))
+		FFileHelper::SaveStringToFile("", *(fileDir + fileName));
+
+	return fileDir + fileName;
 }

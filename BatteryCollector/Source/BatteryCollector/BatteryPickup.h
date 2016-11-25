@@ -10,18 +10,18 @@ class BATTERYCOLLECTOR_API ABatteryPickup : public APickup
 {
 	GENERATED_BODY()
 
-public:
-	// Sets default values for this actor's properties
-	ABatteryPickup();
+	public:
+		// Sets default values for this actor's properties
+		ABatteryPickup();
 
-	// Override pickup behaviour - use Implementation because BlueprintNative.
-	void WasCollected_Implementation() override;
+		// Override pickup behaviour - use Implementation because BlueprintNative.
+		void WasCollected_Implementation() override;
 
-	// Accessor function to get the battery power.
-	float GetPower();
+		// Accessor function to get the battery power.
+		float GetPower();
 
-protected:
-	// Set the amount of power the battery gives to the character.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected))
-	float batteryPower;
+	protected:
+		// Set the amount of power the battery gives to the character.
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected))
+		float batteryPower;
 };
