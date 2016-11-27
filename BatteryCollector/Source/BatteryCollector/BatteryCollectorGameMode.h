@@ -1,5 +1,7 @@
 // Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
 #pragma once
+
+#include "Logger.h"
 #include "GameFramework/GameMode.h"
 #include "BatteryCollectorGameMode.generated.h"
 
@@ -12,8 +14,6 @@ enum class EBatteryPlayState
 	EWon,
 	EUnknown
 };
-
-class BATTERYCOLLECTOR_API Logger;
 
 UCLASS(minimalapi)
 class ABatteryCollectorGameMode : public AGameMode
@@ -65,5 +65,4 @@ private:
 	void HandleNewState(EBatteryPlayState newState);
 
 	Logger* logger;
-	TArray<AActor*> GetActorsOfClass(TSubclassOf<AActor> type);
 };

@@ -11,6 +11,7 @@ public:
 
 	void RecordActor(AActor* actor);
 	void RecordActors(TArray<AActor*> actors);
+	void RecordActorOfType(AActor* actor);
 	void LogAll();
 
 private:

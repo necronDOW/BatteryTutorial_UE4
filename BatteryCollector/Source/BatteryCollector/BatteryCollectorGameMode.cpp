@@ -7,7 +7,6 @@
 #include "Blueprint/UserWidget.h"
 #include "SpawnVolume.h"
 #include "BatteryPickup.h"
-#include "Logger.h"
 
 ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 {
@@ -21,14 +20,11 @@ ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 	// Base decay rate.
 	decayRate = 0.01f;
 
-	//// Create a logger system object.
-	//logger = new Logger(FPaths::GameDir() + "Content/Logs/");
-
-	//// Add the player and batteries to the record targets.
-	//logger->RecordActor(UGameplayStatics::GetPlayerPawn(this, 0));
-	//logger->RecordActors(GetActorsOfClass(ABatteryPickup::StaticClass()));
+	// Create a logger system object.
+	logger = new Logger(FPaths::GameDir() + "Content/Logs/");
 }
 
+int lastBatteryCount = 0;
 void ABatteryCollectorGameMode::BeginPlay()
 {
 	Super::BeginPlay();
@@ -64,6 +60,9 @@ void ABatteryCollectorGameMode::BeginPlay()
 			currentWidget->AddToViewport();
 		}
 	}
+
+	// Add the player to the record targets.
+	logger->RecordActor(myCharacter);
 }
 
 void ABatteryCollectorGameMode::Tick(float deltaTime)
@@ -92,7 +91,14 @@ void ABatteryCollectorGameMode::Tick(float deltaTime)
 		}
 	}
 
-	//logger->LogAll();
+	TArray<AActor*> batteries;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABatteryPickup::StaticClass(), batteries);
+	if (batteries.Num() > lastBatteryCount)
+		logger->RecordActorOfType(batteries[batteries.Num() - 1]);
+
+	lastBatteryCount = batteries.Num();
+
+	logger->LogAll();
 }
 
 float ABatteryCollectorGameMode::GetPowerToWin() const
@@ -117,63 +123,56 @@ void ABatteryCollectorGameMode::HandleNewState(EBatteryPlayState newState)
 	switch (newState)
 	{
 		// If the game is playing.
-	case EBatteryPlayState::EPlaying:
-	{
-		// Spawn volumes active.
-		for (ASpawnVolume* volume : spawnVolumeActors)
+		case EBatteryPlayState::EPlaying:
 		{
-			volume->SetSpawningActive(true);
+			// Spawn volumes active.
+			for (ASpawnVolume* volume : spawnVolumeActors)
+			{
+				volume->SetSpawningActive(true);
+			}
 		}
-	}
-	break;
-	// If we've won the game.
-	case EBatteryPlayState::EWon:
-	{
-		// Spawn volumes in-active.
-		for (ASpawnVolume* volume : spawnVolumeActors)
+		break;
+		// If we've won the game.
+		case EBatteryPlayState::EWon:
 		{
-			volume->SetSpawningActive(false);
+			// Spawn volumes in-active.
+			for (ASpawnVolume* volume : spawnVolumeActors)
+			{
+				volume->SetSpawningActive(false);
+			}
 		}
-	}
-	break;
-	// If we've lost the game.
-	case EBatteryPlayState::EGameOver:
-	{
-		// Spawn volumes in-active.
-		for (ASpawnVolume* volume : spawnVolumeActors)
+		break;
+		// If we've lost the game.
+		case EBatteryPlayState::EGameOver:
 		{
-			volume->SetSpawningActive(false);
-		}
+			// Spawn volumes in-active.
+			for (ASpawnVolume* volume : spawnVolumeActors)
+			{
+				volume->SetSpawningActive(false);
+			}
 
-		// Block player input.
-		APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
-		if (controller)
-		{
-			controller->SetCinematicMode(true, false, false, true, true);
-		}
+			// Block player input.
+			APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
+			if (controller)
+			{
+				controller->SetCinematicMode(true, false, false, true, true);
+			}
 
-		// Ragdoll the character.
-		ACharacter* character = UGameplayStatics::GetPlayerCharacter(this, 0);
-		if (character)
-		{
-			character->GetMesh()->SetSimulatePhysics(true);
-			character->GetMovementComponent()->MovementState.bCanJump = false;
+			// Ragdoll the character.
+			ACharacter* character = UGameplayStatics::GetPlayerCharacter(this, 0);
+			if (character)
+			{
+				character->GetMesh()->SetSimulatePhysics(true);
+				character->GetMovementComponent()->MovementState.bCanJump = false;
+			}
 		}
+		break;
+		// Unknown/default state.
+		default:
+		case EBatteryPlayState::EUnknown:
+		{
+			// Do nothing.
+		}
+		break;
 	}
-	break;
-	// Unknown/default state.
-	default:
-	case EBatteryPlayState::EUnknown:
-	{
-		// Do nothing.
-	}
-	break;
-	}
-}
-
-TArray<AActor*> ABatteryCollectorGameMode::GetActorsOfClass(TSubclassOf<AActor> type)
-{
-	TArray<AActor*> tmp;
-	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), type, tmp);
-	return tmp;
 }
