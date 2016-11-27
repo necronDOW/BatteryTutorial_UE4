@@ -7,6 +7,7 @@
 #include "Blueprint/UserWidget.h"
 #include "SpawnVolume.h"
 #include "BatteryPickup.h"
+#include "Logger.h"
 
 ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 {
@@ -20,8 +21,12 @@ ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 	// Base decay rate.
 	decayRate = 0.01f;
 
-	logDir = FPaths::GameDir() + "Content/Logs/";
-	logExt = ".log";
+	//// Create a logger system object.
+	//logger = new Logger(FPaths::GameDir() + "Content/Logs/");
+
+	//// Add the player and batteries to the record targets.
+	//logger->RecordActor(UGameplayStatics::GetPlayerPawn(this, 0));
+	//logger->RecordActors(GetActorsOfClass(ABatteryPickup::StaticClass()));
 }
 
 void ABatteryCollectorGameMode::BeginPlay()
@@ -85,13 +90,9 @@ void ABatteryCollectorGameMode::Tick(float deltaTime)
 			// If the player has lost all power, game over.
 			SetCurrentState(EBatteryPlayState::EGameOver);
 		}
-
-		LogActor(myCharacter);
 	}
 
-	TArray<AActor*> batteryPickups;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABatteryPickup::StaticClass(), batteryPickups);
-	LogActors(batteryPickups);
+	//logger->LogAll();
 }
 
 float ABatteryCollectorGameMode::GetPowerToWin() const
@@ -116,95 +117,63 @@ void ABatteryCollectorGameMode::HandleNewState(EBatteryPlayState newState)
 	switch (newState)
 	{
 		// If the game is playing.
-		case EBatteryPlayState::EPlaying:
-		{
-			// Spawn volumes active.
-			for (ASpawnVolume* volume : spawnVolumeActors)
-			{
-				volume->SetSpawningActive(true);
-			}
-		}
-		break;
-		// If we've won the game.
-		case EBatteryPlayState::EWon:
-		{
-			// Spawn volumes in-active.
-			for (ASpawnVolume* volume : spawnVolumeActors)
-			{
-				volume->SetSpawningActive(false);
-			}
-		}
-		break;
-		// If we've lost the game.
-		case EBatteryPlayState::EGameOver:
-		{
-			// Spawn volumes in-active.
-			for (ASpawnVolume* volume : spawnVolumeActors)
-			{
-				volume->SetSpawningActive(false);
-			}
-
-			// Block player input.
-			APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
-			if (controller)
-			{
-				controller->SetCinematicMode(true, false, false, true, true);
-			}
-
-			// Ragdoll the character.
-			ACharacter* character = UGameplayStatics::GetPlayerCharacter(this, 0);
-			if (character)
-			{
-				character->GetMesh()->SetSimulatePhysics(true);
-				character->GetMovementComponent()->MovementState.bCanJump = false;
-			}
-		}
-		break;
-		// Unknown/default state.
-		default:
-		case EBatteryPlayState::EUnknown:
-		{
-			// Do nothing.
-		}
-		break;
-	}
-}
-
-void ABatteryCollectorGameMode::LogActor(AActor* target)
-{
-	FString fileName = target->GetName() + logExt;
-	FString dir = CreateDirectory(logDir, fileName);
-
-	FString output = "name:" + target->GetName() + "\n";
-	FFileHelper::SaveStringToFile(output, *dir, FFileHelper::EEncodingOptions::ForceUTF8, 
-		&IFileManager::Get(), FILEWRITE_Append);
-}
-
-void ABatteryCollectorGameMode::LogActors(TArray<AActor*> targets)
-{
-	if (targets.Num() == 0)
-		return;
-
-	FString fileName = targets[0]->GetName() + "_etc" + logExt;
-	FString dir = CreateDirectory(logDir, fileName);
-
-	for (AActor* target : targets)
+	case EBatteryPlayState::EPlaying:
 	{
-		FString output = "name:" + target->GetName() + ";";
-		FFileHelper::SaveStringToFile(output, *dir, FFileHelper::EEncodingOptions::ForceUTF8,
-			&IFileManager::Get(), FILEWRITE_Append);
+		// Spawn volumes active.
+		for (ASpawnVolume* volume : spawnVolumeActors)
+		{
+			volume->SetSpawningActive(true);
+		}
+	}
+	break;
+	// If we've won the game.
+	case EBatteryPlayState::EWon:
+	{
+		// Spawn volumes in-active.
+		for (ASpawnVolume* volume : spawnVolumeActors)
+		{
+			volume->SetSpawningActive(false);
+		}
+	}
+	break;
+	// If we've lost the game.
+	case EBatteryPlayState::EGameOver:
+	{
+		// Spawn volumes in-active.
+		for (ASpawnVolume* volume : spawnVolumeActors)
+		{
+			volume->SetSpawningActive(false);
+		}
+
+		// Block player input.
+		APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
+		if (controller)
+		{
+			controller->SetCinematicMode(true, false, false, true, true);
+		}
+
+		// Ragdoll the character.
+		ACharacter* character = UGameplayStatics::GetPlayerCharacter(this, 0);
+		if (character)
+		{
+			character->GetMesh()->SetSimulatePhysics(true);
+			character->GetMovementComponent()->MovementState.bCanJump = false;
+		}
+	}
+	break;
+	// Unknown/default state.
+	default:
+	case EBatteryPlayState::EUnknown:
+	{
+		// Do nothing.
+	}
+	break;
 	}
 }
 
-FString ABatteryCollectorGameMode::CreateDirectory(FString fileDir, FString fileName)
+TArray<AActor*> ABatteryCollectorGameMode::GetActorsOfClass(TSubclassOf<AActor> type)
 {
-	IPlatformFile &platformFile = FPlatformFileManager::Get().GetPlatformFile();
-
-	if (!platformFile.DirectoryExists(*fileDir))
-		platformFile.CreateDirectory(*fileDir);
-
-	if (!platformFile.FileExists(*(fileDir + fileName)))
-		FFileHelper::SaveStringToFile("", *(fileDir + fileName));
-
-	return fileDir + fileName;
+	TArray<AActor*> tmp;
+	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), type, tmp);
+	return tmp;
 }

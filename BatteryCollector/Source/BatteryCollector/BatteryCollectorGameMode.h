@@ -13,6 +13,8 @@ enum class EBatteryPlayState
 	EUnknown
 };
 
+class BATTERYCOLLECTOR_API Logger;
+
 UCLASS(minimalapi)
 class ABatteryCollectorGameMode : public AGameMode
 {
@@ -25,13 +27,13 @@ public:
 
 	// Returns the amount of power needed to win - needed for the HUD.
 	UFUNCTION(BlueprintPure, Category = "Power")
-	float GetPowerToWin() const;
+		float GetPowerToWin() const;
 
 	virtual void BeginPlay() override;
 
 	// Returns the current play state.
 	UFUNCTION(BlueprintPure, Category = "Power")
-	EBatteryPlayState GetCurrentState() const;
+		EBatteryPlayState GetCurrentState() const;
 
 	// Sets the current playing state.
 	void SetCurrentState(EBatteryPlayState newState);
@@ -39,19 +41,19 @@ public:
 protected:
 	// The rate at which the character loses power.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
-	float decayRate;
+		float decayRate;
 
 	// The power needed to win the game.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
-	float powerToWin;
+		float powerToWin;
 
 	// Widget class used for the HUD.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
-	TSubclassOf<class UUserWidget> hudWidgetClass;
+		TSubclassOf<class UUserWidget> hudWidgetClass;
 
 	// Instance of the widget class.
 	UPROPERTY()
-	class UUserWidget* currentWidget;
+		class UUserWidget* currentWidget;
 
 private:
 	// Keeps track of the current state of play.
@@ -62,9 +64,6 @@ private:
 	// Handle any function calls that rely upon changing the playing state of the game.
 	void HandleNewState(EBatteryPlayState newState);
 
-	FString logDir;
-	FString logExt;
-	void LogActor(AActor* target);
-	void LogActors(TArray<AActor*> targets);
-	FString CreateDirectory(FString fileDir, FString fileName);
+	Logger* logger;
+	TArray<AActor*> GetActorsOfClass(TSubclassOf<AActor> type);
 };
