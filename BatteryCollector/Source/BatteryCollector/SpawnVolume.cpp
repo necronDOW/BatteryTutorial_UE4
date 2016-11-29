@@ -4,7 +4,10 @@
 #include "SpawnVolume.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Pickup.h"
+#include "Logger.h"
+#include "BatteryCollectorGameMode.h"
 
+Logger* logger;
 
 // Sets default values
 ASpawnVolume::ASpawnVolume()
@@ -25,6 +28,8 @@ ASpawnVolume::ASpawnVolume()
 void ASpawnVolume::BeginPlay()
 {
 	Super::BeginPlay();
+
+	logger = Cast<ABatteryCollectorGameMode>(GetWorld()->GetAuthGameMode())->GetLogger();
 }
 
 // Called every frame
@@ -87,6 +92,10 @@ void ASpawnVolume::SpawnPickup()
 			// Get a random spawn delay between min and max.
 			spawnDelay = FMath::FRandRange(minSpawnDelay, maxSpawnDelay);
 			GetWorldTimerManager().SetTimer(spawnTimer, this, &ASpawnVolume::SpawnPickup, spawnDelay, false);
+
+			// Add the new pickup to the logger.
+			if (logger != nullptr)
+				logger->RecordActorOfType(spawnedPickup, Logger::LogMode::LogOnce);
 		}
 	}
 }

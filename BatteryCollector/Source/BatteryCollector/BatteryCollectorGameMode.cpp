@@ -91,13 +91,6 @@ void ABatteryCollectorGameMode::Tick(float deltaTime)
 		}
 	}
 
-	TArray<AActor*> batteries;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABatteryPickup::StaticClass(), batteries);
-	if (batteries.Num() > lastBatteryCount)
-		logger->RecordActorOfType(batteries[batteries.Num() - 1]);
-
-	lastBatteryCount = batteries.Num();
-
 	logger->LogAll();
 }
 
@@ -116,6 +109,11 @@ void ABatteryCollectorGameMode::SetCurrentState(EBatteryPlayState newState)
 	// Set the new state and handle any necessary actions.
 	currentState = newState;
 	HandleNewState(currentState);
+}
+
+Logger* ABatteryCollectorGameMode::GetLogger()
+{
+	return logger;
 }
 
 void ABatteryCollectorGameMode::HandleNewState(EBatteryPlayState newState)

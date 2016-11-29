@@ -38,6 +38,9 @@ public:
 	// Sets the current playing state.
 	void SetCurrentState(EBatteryPlayState newState);
 
+	// Get the logger instance.
+	Logger* GetLogger();
+
 protected:
 	// The rate at which the character loses power.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))

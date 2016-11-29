@@ -5,21 +5,31 @@
 
 class BATTERYCOLLECTOR_API Logger
 {
-public:
-	Logger(FString directory);
-	~Logger();
+	public:
+		enum LogMode
+		{
+			LogOnce,
+			LogMulti
+		};
 
-	void RecordActor(AActor* actor);
-	void RecordActors(TArray<AActor*> actors);
-	void RecordActorOfType(AActor* actor);
-	void LogAll();
+		Logger(FString directory);
+		~Logger();
 
-private:
-	FString _directory;
-	const FString _extension = ".log";
-	TArray<FString> _fileDirs;
-	TArray<TArray<AActor*>> _recordables;
+		void RecordActor(AActor* actor, LogMode mode = LogMode::LogMulti);
+		void RecordActors(TArray<AActor*> actors, LogMode mode = LogMode::LogMulti);
+		void RecordActorOfType(AActor* actor, LogMode mode = LogMode::LogMulti);
+		void LogAll();
 
-	FString CreateDirectory(FString fileName);
-	void AppendToFile(FString text, const TCHAR* dir);
+	private:
+
+		FString _directory;
+		const FString _extension = ".log";
+		TArray<FString> _fileDirs;
+		TArray<TArray<AActor*>> _recordables;
+		TArray<LogMode> _logModes;
+
+		void LogSet(int index);
+		FString CreateDirectory(FString fileName);
+		void AppendToFile(FString text, const TCHAR* dir);
+		void OverwriteFile(FString text, const TCHAR* dir);
 };
