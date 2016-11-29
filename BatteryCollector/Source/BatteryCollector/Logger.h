@@ -21,14 +21,26 @@ class BATTERYCOLLECTOR_API Logger
 		void LogAll();
 
 	private:
+		struct Recordable
+		{
+			FString directory;
+			TArray<AActor*> set;
+			LogMode mode;
 
+			Recordable() {}
+			Recordable(FString d, LogMode m)
+			{
+				directory = d;
+				mode = m;
+			}
+		};
+
+		FString _dateTime;
 		FString _directory;
 		const FString _extension = ".log";
-		TArray<FString> _fileDirs;
-		TArray<TArray<AActor*>> _recordables;
-		TArray<LogMode> _logModes;
+		TArray<Recordable*> recordables;
 
-		void LogSet(int index);
+		void LogSet(Recordable* recordable);
 		FString CreateDirectory(FString fileName);
 		void AppendToFile(FString text, const TCHAR* dir);
 		void OverwriteFile(FString text, const TCHAR* dir);

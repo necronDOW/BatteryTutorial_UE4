@@ -2,10 +2,13 @@
 
 #include "BatteryCollector.h"
 #include "Logger.h"
+#include "BatteryCollectorCharacter.h"
 
 Logger::Logger(FString directory)
 {
 	_directory = directory;
+
+	_dateTime = "-" + FDateTime::Now().ToString();
 }
 
 Logger::~Logger()
@@ -14,14 +17,12 @@ Logger::~Logger()
 
 void Logger::RecordActor(AActor* actor, LogMode mode)
 {
-	TArray<AActor*> tmp;
-	tmp.Add(actor);
-	_recordables.Add(tmp);
-	_fileDirs.Add(CreateDirectory(actor->GetName()));
+	Recordable* tmp = new Recordable(CreateDirectory(actor->GetName() + _dateTime), mode);
+	tmp->set.Add(actor);
+	recordables.Add(tmp);
 
 	if (mode == LogMode::LogOnce)
-		LogSet(_recordables.Num() - 1);
-	_logModes.Add(mode);
+		LogSet(tmp);
 }
 
 void Logger::RecordActors(TArray<AActor*> actors, LogMode mode)
@@ -29,25 +30,27 @@ void Logger::RecordActors(TArray<AActor*> actors, LogMode mode)
 	if (actors.Num() == 0)
 		return;
 
-	_recordables.Add(actors);
-	_fileDirs.Add(CreateDirectory(actors[0]->GetName()));
+	Recordable* tmp = new Recordable(CreateDirectory(actors[0]->GetName() + _dateTime), mode);
+	for (AActor* actor : actors)
+		tmp->set.Add(actor);
+	recordables.Add(tmp);
 
 	if (mode == LogMode::LogOnce)
-		LogSet(_recordables.Num() - 1);
-	_logModes.Add(mode);
+		LogSet(tmp);
 }
 
 void Logger::RecordActorOfType(AActor* actor, LogMode mode)
 {
 	UClass* type = actor->GetClass();
-	for (int i = 0; i < _recordables.Num(); i++)
+	for (int i = 0; i < recordables.Num(); i++)
 	{
-		if (type == _recordables[i][0]->GetClass())
+		Recordable* tmp = recordables[i];
+		if (type == tmp->set[0]->GetClass())
 		{
-			_recordables[i].Add(actor);
+			tmp->set.Add(actor);
 
-			if (_logModes[i] == LogMode::LogOnce)
-				LogSet(i);
+			if (tmp->mode == LogMode::LogOnce)
+				LogSet(tmp);
 
 			return;
 		}
@@ -58,25 +61,31 @@ void Logger::RecordActorOfType(AActor* actor, LogMode mode)
 
 void Logger::LogAll()
 {
-	for (int i = 0; i < _recordables.Num(); i++)
+	for (Recordable* r : recordables)
 	{
-		if (_logModes[i] == LogMode::LogMulti)
+		if (r->mode == LogMode::LogMulti)
 		{
-			for (AActor* target : _recordables[i])
-				AppendToFile("position:" + target->GetActorLocation().ToString() + ";", *_fileDirs[i]);
+			UClass* type = r->set[0]->GetClass();
+			for (AActor* target : r->set)
+			{
+				AppendToFile("position:" + target->GetActorLocation().ToString() + ";", *r->directory);
 
-			AppendToFile(LINE_TERMINATOR, *_fileDirs[i]);
+				float power = Cast<ABatteryCollectorCharacter>(target)->GetCurrentPower();
+				AppendToFile("power:" + FString::SanitizeFloat(power) + ";", *r->directory);
+			}
+
+			AppendToFile(LINE_TERMINATOR, *r->directory);
 		}
 	}
 }
 
-void Logger::LogSet(int index)
+void Logger::LogSet(Recordable* recordable)
 {
 	FString output = "";
-	for (AActor* target : _recordables[index])
+	for (AActor* target : recordable->set)
 		output += "position:" + target->GetActorLocation().ToString() + ";";
 
-	OverwriteFile(output, *_fileDirs[index]);
+	OverwriteFile(output, *recordable->directory);
 }
 
 FString Logger::CreateDirectory(FString fileName)
