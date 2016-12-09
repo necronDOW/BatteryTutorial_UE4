@@ -8,16 +8,16 @@ Logger::Logger(FString directory)
 {
 	_directory = directory;
 
-	_dateTime = "-" + FDateTime::Now().ToString();
+	_dateTime = FDateTime::Now().ToString();
 }
 
 Logger::~Logger()
 {
 }
 
-void Logger::RecordActor(AActor* actor, LogMode mode)
+void Logger::RecordActor(AActor* actor, FString varName, LogMode mode)
 {
-	Recordable* tmp = new Recordable(CreateDirectory(actor->GetName() + _dateTime), mode);
+	Recordable* tmp = new Recordable(CreateDirectory(actor->GetName() + "~" + _dateTime + "~" + varName), varName, mode);
 	tmp->set.Add(actor);
 	recordables.Add(tmp);
 
@@ -25,12 +25,12 @@ void Logger::RecordActor(AActor* actor, LogMode mode)
 		LogSet(tmp);
 }
 
-void Logger::RecordActors(TArray<AActor*> actors, LogMode mode)
+void Logger::RecordActors(TArray<AActor*> actors, FString varName, LogMode mode)
 {
 	if (actors.Num() == 0)
 		return;
 
-	Recordable* tmp = new Recordable(CreateDirectory(actors[0]->GetName() + _dateTime), mode);
+	Recordable* tmp = new Recordable(CreateDirectory(actors[0]->GetName() + "~" + _dateTime + "~" + varName), varName, mode);
 	for (AActor* actor : actors)
 		tmp->set.Add(actor);
 	recordables.Add(tmp);
@@ -39,7 +39,7 @@ void Logger::RecordActors(TArray<AActor*> actors, LogMode mode)
 		LogSet(tmp);
 }
 
-void Logger::RecordActorOfType(AActor* actor, LogMode mode)
+void Logger::RecordActorOfType(AActor* actor, FString varName, LogMode mode)
 {
 	UClass* type = actor->GetClass();
 	for (int i = 0; i < recordables.Num(); i++)
@@ -50,17 +50,19 @@ void Logger::RecordActorOfType(AActor* actor, LogMode mode)
 			tmp->set.Add(actor);
 
 			if (tmp->mode == LogMode::LogOnce)
-				LogSet(tmp);
+				LogActor(tmp, tmp->set.Num() - 1);
 
 			return;
 		}
 	}
 
-	RecordActor(actor, mode);
+	RecordActor(actor, varName, mode);
 }
 
 void Logger::LogAll()
 {
+	_frameCount++;
+
 	for (Recordable* r : recordables)
 	{
 		if (r->mode == LogMode::LogMulti)
@@ -68,10 +70,16 @@ void Logger::LogAll()
 			UClass* type = r->set[0]->GetClass();
 			for (AActor* target : r->set)
 			{
-				AppendToFile("position:" + target->GetActorLocation().ToString() + ";", *r->directory);
+				FString frameStr = FString::FromInt(_frameCount);
 
-				float power = Cast<ABatteryCollectorCharacter>(target)->GetCurrentPower();
-				AppendToFile("power:" + FString::SanitizeFloat(power) + ";", *r->directory);
+				if (r->varName == "position")
+					AppendToFile(target->GetActorLocation().ToString() + ":" + frameStr + ";", *r->directory);
+
+				if (r->varName == "power")
+				{
+					float power = Cast<ABatteryCollectorCharacter>(target)->GetCurrentPower();
+					AppendToFile(FString::SanitizeFloat(power) + ":" + frameStr + ";", *r->directory);
+				}
 			}
 
 			AppendToFile(LINE_TERMINATOR, *r->directory);
@@ -79,13 +87,21 @@ void Logger::LogAll()
 	}
 }
 
+/* CURRENTLY REDUNDANT */
 void Logger::LogSet(Recordable* recordable)
 {
 	FString output = "";
 	for (AActor* target : recordable->set)
-		output += "position:" + target->GetActorLocation().ToString() + ";";
+		output += target->GetActorLocation().ToString() + ":" + FString::FromInt(_frameCount) + ";";
 
 	OverwriteFile(output, *recordable->directory);
+}
+/* CURRENTLY REDUNDANT */
+
+void Logger::LogActor(Recordable* recordable, int index)
+{
+	AActor* target = recordable->set[index];
+	AppendToFile(target->GetActorLocation().ToString() + ":" + FString::FromInt(_frameCount) + ";", *recordable->directory);
 }
 
 FString Logger::CreateDirectory(FString fileName)

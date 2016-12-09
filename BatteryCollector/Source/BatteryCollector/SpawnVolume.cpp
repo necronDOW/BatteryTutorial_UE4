@@ -95,7 +95,7 @@ void ASpawnVolume::SpawnPickup()
 
 			// Add the new pickup to the logger.
 			if (logger != nullptr)
-				logger->RecordActorOfType(spawnedPickup, Logger::LogMode::LogOnce);
+				logger->RecordActorOfType(spawnedPickup, "position", Logger::LogMode::LogOnce);
 		}
 	}
 }

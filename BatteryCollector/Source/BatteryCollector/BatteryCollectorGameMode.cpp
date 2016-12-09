@@ -62,7 +62,8 @@ void ABatteryCollectorGameMode::BeginPlay()
 	}
 
 	// Add the player to the record targets.
-	logger->RecordActor(myCharacter);
+	logger->RecordActor(myCharacter, "position");
+	logger->RecordActor(myCharacter, "power");
 }
 
 void ABatteryCollectorGameMode::Tick(float deltaTime)
