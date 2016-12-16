@@ -73,12 +73,12 @@ void Logger::LogAll()
 				FString frameStr = FString::FromInt(_frameCount);
 
 				if (r->varName == "position")
-					AppendToFile(target->GetActorLocation().ToString() + ":" + frameStr + ";", *r->directory);
+					AppendToFile(target->GetActorLocation().ToString() + " F=" + frameStr + ";", *r->directory);
 
 				if (r->varName == "power")
 				{
 					float power = Cast<ABatteryCollectorCharacter>(target)->GetCurrentPower();
-					AppendToFile(FString::SanitizeFloat(power) + ":" + frameStr + ";", *r->directory);
+					AppendToFile(FString::SanitizeFloat(power) + " F=" + frameStr + ";", *r->directory);
 				}
 			}
 
@@ -92,7 +92,7 @@ void Logger::LogSet(Recordable* recordable)
 {
 	FString output = "";
 	for (AActor* target : recordable->set)
-		output += target->GetActorLocation().ToString() + ":" + FString::FromInt(_frameCount) + ";";
+		output += target->GetActorLocation().ToString() + " F=" + FString::FromInt(_frameCount) + ";";
 
 	OverwriteFile(output, *recordable->directory);
 }
@@ -101,7 +101,7 @@ void Logger::LogSet(Recordable* recordable)
 void Logger::LogActor(Recordable* recordable, int index)
 {
 	AActor* target = recordable->set[index];
-	AppendToFile(target->GetActorLocation().ToString() + ":" + FString::FromInt(_frameCount) + ";", *recordable->directory);
+	AppendToFile(target->GetActorLocation().ToString() + " F=" + FString::FromInt(_frameCount) + ";", *recordable->directory);
 }
 
 FString Logger::CreateDirectory(FString fileName)
